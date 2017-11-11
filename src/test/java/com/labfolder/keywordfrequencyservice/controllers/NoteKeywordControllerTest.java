@@ -3,6 +3,7 @@ package com.labfolder.keywordfrequencyservice.controllers;
 import com.labfolder.business.KeywordAnalyzer;
 import com.labfolder.controllers.NoteKeywordController;
 import com.labfolder.domain.KeywordFrequency;
+import com.labfolder.exceptions.NoteAnalizerException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -36,11 +37,10 @@ public class NoteKeywordControllerTest {
     @Test
     public void receiveLongEntry() throws Exception {
 
-        Mockito.when(keywordAnalyzer.analyze(Mockito.any(), Mockito.anyString())).thenReturn(new KeywordFrequency(5, new String []{}));
+        Mockito.when(keywordAnalyzer.analyze(Mockito.any(), Mockito.anyString())).thenReturn(new KeywordFrequency(5, new String[]{}));
 
         Resource resource = new ClassPathResource("longInput.txt");
-        MockMultipartFile entry = new MockMultipartFile("entry","blob", "text/plain", resource.getInputStream());
-        MockMultipartFile keyword = new MockMultipartFile("keyword","keyword", "text/plain", "lorem".getBytes());
+        MockMultipartFile entry = new MockMultipartFile("entry", "blob", "text/plain", resource.getInputStream());
 
         RequestBuilder requestBuilder = MockMvcRequestBuilders.fileUpload("/NoteKeyword")
                 .file(entry).param("keyword", "lorem");
@@ -57,12 +57,30 @@ public class NoteKeywordControllerTest {
     @Test
     public void receiveEmptyEntry() throws Exception {
 
-        Mockito.when(keywordAnalyzer.analyze(Mockito.any(), Mockito.anyString())).thenReturn(new KeywordFrequency(5, new String []{}));
+        Mockito.when(keywordAnalyzer.analyze(Mockito.any(), Mockito.anyString())).thenReturn(new KeywordFrequency(5, new String[]{}));
 
-        MockMultipartFile keyword = new MockMultipartFile("keyword","keyword", "text/plain", "lorem".getBytes());
+        MockMultipartFile keyword = new MockMultipartFile("keyword", "keyword", "text/plain", "lorem".getBytes());
 
         RequestBuilder requestBuilder = MockMvcRequestBuilders.fileUpload("/NoteKeyword")
                 .param("keyword", "lorem");
+
+        MvcResult result = mockMvc.perform(requestBuilder).andReturn();
+
+        MockHttpServletResponse response = result.getResponse();
+
+        assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
+    }
+
+    @Test
+    public void receiveEmptyKeyword() throws Exception {
+
+        Mockito.when(keywordAnalyzer.analyze(Mockito.any(), Mockito.anyString())).thenReturn(new KeywordFrequency(5, new String[]{}));
+
+        Resource resource = new ClassPathResource("longInput.txt");
+        MockMultipartFile entry = new MockMultipartFile("entry", "blob", "text/plain", resource.getInputStream());
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders.fileUpload("/NoteKeyword").file(entry)
+                .param("keyword", "");
 
         MvcResult result = mockMvc.perform(requestBuilder).andReturn();
 
