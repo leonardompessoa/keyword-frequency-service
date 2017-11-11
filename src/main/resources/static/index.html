@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"
+            integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    </head>
+    <body>
+
+        <div class="jumbotron text-center">
+            <h1>Research Note Entry</h1>
+            <p>Enter your research note</p>
+        </div>
+        <div class="container">
+
+            <form enctype="multipart/form-data" id="fileUploadForm">
+
+                <div class="form-group">
+                    <label for="entry">Note Entry:</label>
+                    <textarea id="entry" name="entry" class="form-control" rows="20"></textarea>
+                </div>
+                
+                <div id="alert" class="alert alert-danger alert-dismissable fade">
+                    <strong>Error! </strong> Something went wrong!
+                </div>
+
+                <div class="form-group">
+                    <label for="keyword">Note Keyword</label>
+                    <div class="input-group">
+                        <input type="text" name="keyword" class="form-control" id="keyword">
+                        <span class="input-group-btn">
+                            <button id="btnAdd" type="submit" class="btn btn-success">Add</button>
+                        </span>
+                    </div>
+                </div>
+            </form>
+
+            <h2>Keywords</h2>
+            <table id="keywordTable" class="table table-condensed">
+            <thead>
+                <tr>
+                <th>Keyword</th>
+                <th>Frequency</th>
+                <th>Similar</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            </table>
+
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script>
+            
+            function addKeyword(keyword, data) {
+                let tr = document.createElement("tr");
+                let tdKeyword = document.createElement("td");
+                tdKeyword.innerHTML = keyword;
+                let tdFrequency = document.createElement("td");
+                tdFrequency.innerHTML = data.frequency;
+                let tdSimilar = document.createElement("td");
+                tdSimilar.innerHTML = data.similarWords.toString();
+                tr.appendChild(tdKeyword);
+                tr.appendChild(tdFrequency);
+                tr.appendChild(tdSimilar);
+                let table = document.getElementById('keywordTable');
+                table.tBodies[0].appendChild(tr);
+            }
+
+            $(document).ready(function () {
+                $("#btnAdd").click(function (event) {
+                    event.preventDefault();
+                    var form = $('#fileUploadForm')[0];
+                    var formData = new FormData(form);
+                    var textAreaBlob = new Blob([form.entry.value], {type: 'text/plain'});
+                    formData.set("entry", textAreaBlob);
+                    $("#btnAdd").prop("disabled", true);
+
+                    $.ajax({
+                        type: "POST",
+                        enctype: 'multipart/form-data',
+                        url: "http://localhost:8080/NoteKeyword",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        cache: false,
+                        timeout: 600000,
+                        success: function (data) {
+                            let keyword = $("#keyword").val();
+                            addKeyword(keyword ,data);
+                            console.log("SUCCESS : ", data);
+                            $("#btnAdd").prop("disabled", false);
+                            $("#keyword").val("");
+                        },
+                        error: function (e) {
+                            $("#alert").removeClass("fade");
+                            console.log("ERROR : ", e);
+                            $("#btnAdd").prop("disabled", false);
+                        }
+                    });
+                });
+                $("#keyword").focusin(function(){
+                    $("#alert").addClass("fade");
+                });
+            });
+        </script>
+    </body>
+</html>
